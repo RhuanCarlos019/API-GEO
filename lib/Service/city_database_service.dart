@@ -4,12 +4,12 @@ import 'package:sqflite/sqflite.dart';
 import '../Model/city_model.dart';
 
 class CityDbService {
-  final String DATABASE_NAME = 'city_db.db'; // Nome do banco de dados
+  final String DATABASE_NAME = 'db.db'; // Nome do banco de dados
   final String TABLE_NAME = 'city'; // Nome da tabela
   final String CREATE_TABLE_SCRIPT = // Script SQL para criar a tabela
       """CREATE TABLE city(
           cityname TEXT PRIMARY KEY, 
-          favorites BOOLEAN
+          favoritescities BOOLEAN
           )""";
   //método openDatabase
   Future<Database> _openDatabase() async {
