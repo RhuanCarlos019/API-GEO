@@ -1,78 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:projeto_api_geo/Controller/weather_controller.dart';
-import 'package:projeto_api_geo/View/details_weather_screen.dart';
 
-class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _cityController = TextEditingController();
+class _HomeScreenState extends State<HomeScreen> {
   final WeatherController _controller = WeatherController();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    _getWeather();
+    super.initState();
+  }
+
+  Future<void> _getWeather() async {
+    try {
+      Position _position = await Geolocator.getCurrentPosition();
+      print(_position.latitude);
+      _controller.getWeatherbyLocation(_position.latitude, _position.longitude);
+      setState(() {});
+    } catch (e) {
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Search")),
+      appBar: AppBar(
+        title: Text("Previsão do Tempo"),
+      ),
       body: Padding(
         padding: EdgeInsets.all(12),
         child: Center(
-          child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextFormField(
-                      controller: _cityController,
-                      decoration:
-                          InputDecoration(hintText: "Enter the city name"),
-                      validator: (value) {
-                        if (value!.trim().isEmpty) {
-                          return "Please enter a city";
-                        }
-                        return null;
-                      }),
-                  ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _cityFind(_cityController.text);
-                        }
-                      },
-                      child: const Text("Search"))
-                ],
-              )),
-        ),
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/favorites');
+                    },
+                    child: const Text("Favorites")),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/search');
+                    },
+                    child: const Text("Localization"))
+              ],
+            ),
+            const SizedBox(height: 20),
+            //construir a exibição do clima(geolocalização)
+            Builder(
+                builder: (context) {
+                  if (_controller.weatherList.isEmpty) {
+                    return Column(children: [
+                      const Text("Localização Não Encontrada"),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          _getWeather();
+                        },
+                      )
+                    ]);
+                  } else {
+                    return Column(
+                      children: [
+                        Text(_controller.weatherList.last.name),
+                        Text(_controller.weatherList.last.main),
+                        Text(_controller.weatherList.last.description),
+                        Text((_controller.weatherList.last.temp - 273)
+                            .toString()),
+                        Text((_controller.weatherList.last.tempMax - 273)
+                            .toString()),
+                        Text((_controller.weatherList.last.tempMin - 273)
+                            .toString()),
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () {
+                            _getWeather();
+                          },
+                        )
+                      ],
+                    );
+                  }
+                })
+          ],
+        )),
       ),
     );
-  }
-
-  Future<void> _cityFind(String city) async {
-    if (await _controller.findCity(city)) {
-      //snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("City found"),
-          duration: Duration(seconds: 1),
-        ),
-      );
-      //navigation to details
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => WeatherDetailsScreen(cityName: city)));
-    }else{
-      // snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("City not found"),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      _cityController.clear();
-    }
   }
 }

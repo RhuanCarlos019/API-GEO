@@ -1,3 +1,4 @@
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../Model/city_model.dart';
@@ -13,23 +14,54 @@ class CityDbService {
   //método openDatabase
   Future<Database> _openDatabase() async {
     return await openDatabase(
-      DATABASE_NAME,
-      version: 1,
+      join(await getDatabasesPath(),DATABASE_NAME),
       onCreate: (db, version) => CREATE_TABLE_SCRIPT,
+      version: 1,
     );
   }
   //crud
   //insert
   Future<void> insertCity(City city) async {
-    Database db = await _openDatabase();
-    db.insert(TABLE_NAME, city.toMap());
+    try {
+      Database db = await _openDatabase();
+      db.insert(TABLE_NAME, city.toMap());
+      db.close();  
+    } catch (e) {
+      print(e);
+    }   
   }
   //list
   Future<List<Map<String,dynamic>>> listCity() async {
-    Database db = await _openDatabase();
-    List<Map<String, dynamic>> maps = await db.query(TABLE_NAME);
-    return maps;
+    try {
+      Database db = await _openDatabase();
+      List<Map<String, dynamic>> maps = await db.query(TABLE_NAME);
+      db.close();
+      return maps;
+    } catch (e) {
+      print(e);
+      return [];
+    }
   }
-  
+  //delete
+  Future<void> deleteCity(String city) async {
+    try {
+      Database db = await _openDatabase();
+      db.delete(TABLE_NAME, where: 'cityname =?', whereArgs: [city]);
+      db.close();
+    } catch (e) {
+      print(e);
+    }
+  }
+  //update favoritesCities
+  Future<void> updateCity(City city) async {
+    try {
+      Database db = await _openDatabase();
+      db.update(TABLE_NAME, city.toMap(), where: 'cityname =?', whereArgs: [city.cityName]);
+      db.close();
+    } catch (e) {
+      print(e);
+    }
+  }
+
 
 }
